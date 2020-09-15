@@ -40,15 +40,27 @@ void setup()
   pinMode(LED, OUTPUT);
   pinMode(Mfrente, OUTPUT);
   pinMode(Mtras, OUTPUT);
-  Serial.begin(9600);
-  bluetooth.begin(9600);
-  myservo.attach(servo_pos);
-  myservo.write(20);
-
   pinMode(som, OUTPUT);
   pinMode(pir, INPUT);
+  Serial.begin(9600);
+
+  //while(!Serial);
+
+  delay(100);
+  myservo.attach(servo_pos);
+  myservo.write(20);
+  
+
+  
+  
+  delay(200);
+  bluetooth.begin(9600);
 
   inicio();
+  
+  
+  
+  
 }
 void loop()
 {
@@ -56,18 +68,17 @@ void loop()
      
     //bluetooth.println("ligado");
     //bluetooth.println(hc.dist());
-   //Serial.println("Teste");
+    //Serial.println("Teste");
 
-//bool valor_pir = digitalRead(pir);
-
+    //bool valor_pir = digitalRead(pir);
 
 
   if (bluetooth.available() > 0){
     
     while(bluetooth.available())  {      
       comando = bluetooth.read();  
-       
-
+      //bluetooth.println("iniciou");
+      
     }    
     
     Serial.println(comando);
@@ -80,7 +91,8 @@ void loop()
           seguranca();
           
         }else{
-          bluetooth.println("Sobstaculo");
+          bluetooth.println("0");
+          //digitalWrite(Mtras, LOW);
           digitalWrite(Mfrente, !digitalRead(Mfrente));
           digitalWrite(LED, LOW);
           //digitalWrite(LED, !digitalRead(LED));
@@ -88,18 +100,18 @@ void loop()
          
         }
         
-        deteta();
+        //deteta();
         break;
 
       case 't':
         if(hc.dist() <= 50){
             digitalWrite(LED, HIGH);
-            bluetooth.println("obstaculo");
+            //bluetooth.println("obstaculo");
             digitalWrite(Mfrente, LOW);
             digitalWrite(Mtras, !digitalRead(Mtras));
           
         }else{
-          bluetooth.println("Sobstaculo");
+          //bluetooth.println("Sobstaculo");
           digitalWrite(Mfrente, LOW);
           digitalWrite(Mtras, !digitalRead(Mtras));
           digitalWrite(LED, LOW);
@@ -107,7 +119,7 @@ void loop()
           Serial.println("Tras");
         }
 
-        deteta();
+        //deteta();
         break;
 
 
@@ -166,6 +178,7 @@ void loop()
       case 'a':
          Serial.println("Modo autonomo ativado");
          modo_autonomo();
+         delay(1000);
   
          /*if(digitalRead(pir)== HIGH){
           //inicio();
@@ -220,6 +233,7 @@ void loop()
       
   }
   
+  
 }
 
 
@@ -260,12 +274,109 @@ void modo_autonomo(){
   dis_sonar_direita = hc_direita.dist();
   dis_sonar_esquerda = hc_esquerda.dist();
 
-  deteta();
+  int somaFrente = 0;
+  int mediaFrente = 0;
 
-  if( (dis_sonar_frente >= 50)){
-      bluetooth.println("Sobstaculo"); 
-      delay(100);
+  int somaDireita = 0;
+  int mediaDireita = 0;
+
+  int somaEsquerda = 0;
+  int mediaEsquerda = 0;
+
+  //delay(2000);
+  
+  //ciclo que so envia dados e evita obstaculos apos uma media de 40 dados 
+  for(int i=0;i<=40;i++){
+        somaFrente = somaFrente + dis_sonar_frente;
+        somaDireita = somaDireita + dis_sonar_direita;
+        somaEsquerda = somaEsquerda + dis_sonar_esquerda;
+        
+        //delay(100);
+  }
+     
+     
+  mediaFrente = (somaFrente/40);
+  mediaDireita = (somaDireita/40);
+  mediaEsquerda = (somaEsquerda/40);
+     
+
+  //Sensor da frente
+  if(mediaFrente > 50){
+      
+    myservo.write(20);
+    digitalWrite(Mtras, LOW);
+    digitalWrite(LED, LOW);
+     
+    analogWrite(Mfrente, velocidade);
+    Serial.println("Sem obstaculo, a andar");
+      
+    bluetooth.println("0");
+      
+    Serial.println("media: ");
+    Serial.println(mediaFrente);
+    
+
+
+     //obstaculo detetado pelos sensores se o sensor da frente nao detetar nada <50cm
+     if((mediaDireita < 20) && (mediaEsquerda < 20)){
+        
+      //analogWrite(Mfrente, velocidade);
+      //myservo.write(20);
+
+      Serial.println("Obstaculo a direita e a esquerda, continua em frente");
+
+     //obstaculo a direita
+     }else if(mediaDireita < 20){
+        //Virar para a esquerda durante 500ms
+        myservo.write(42);
+        Serial.println("Obstaculo a direita");
+        delay(100);
+
+     //obstaculo a esquerda 
+     }else if(mediaEsquerda < 20){
+        //Virar para a direita durante 500ms
+        myservo.write(0);
+        Serial.println("Obstaculo a esquerda");
+        delay(100);
+     } 
+
+     //((mediaFrente < 50) ||  ((mediaFrente < 50) && (mediaDireita <20)) || ((mediaFrente < 50 && (mediaEsquerda <20) || (mediaFrente < 50) && (mediaDireita < 20) && (mediaEsquerda < 20)))) 
+     }else{
+
+      myservo.write(0);
+      digitalWrite(LED, HIGH);
+      digitalWrite(Mfrente, LOW);
+      analogWrite(Mtras, velocidade);
+      Serial.println("Obstaculo a frente, a recuar");
+      //Serial.println("Todos sensores detetaram, a recuar ate poder efetuar manobra");
+  
+      Serial.println("media: ");
+      Serial.println(mediaFrente);
+      //bluetooth.print("obstaculo");
+      //delay(100);
+      bluetooth.println("1");
+     }
+
+
+     if((mediaFrente <50 ) &&(mediaDireita < 20) && (mediaEsquerda < 20) ){
+      myservo.write(0);
+      digitalWrite(LED, HIGH);
+      digitalWrite(Mfrente, LOW);
+      analogWrite(Mtras, velocidade);
+    
+      Serial.println("Todos sensores detetaram, a recuar ate poder efetuar manobra");
+
+      
+     }
+
+     deteta();
+
+  /*if( (dis_sonar_frente >= 50)){
+
+     
+     
       myservo.write(20);
+      
       
       
       //Serial.println("Sobstaculo");
@@ -277,43 +388,56 @@ void modo_autonomo(){
       
       analogWrite(Mfrente, velocidade);
       //Serial.println("Sem obstaculo, a andar");
+
+      
+      //bluetooth.write("Sobstaculo"); 
+      //delay(400);
+      
       
       
 
   }else{
-      delay(100);
-      bluetooth.println("obstaculo"); 
-      delay(100);
+      //delay(100);
       
+      delay(100);
+      //bluetooth.println(""); 
+
+     
+
+      myservo.write(0);
       //Recuar durante 900 ms
       //velocidade = 120;
       //analogWrite(velocidadeMotor,vel);
       digitalWrite(LED, HIGH);
       digitalWrite(Mfrente, LOW);
 
+    
       
       
 
       //Virar para a direita durante 700ms
-      myservo.write(0);
+      //myservo.write(0);
       //Serial.println("Esquerda");
       
      
       analogWrite(Mtras, velocidade);
       //Serial.println("Obstaculo detetado, a recuar");
-      delay(200);
+      //delay(200);
+
+      //envia_obstaculo();
+
+        //delay(100);
+        //bluetooth.print("obstaculo"); 
+        //delay(100);
        
 
     }
 
-    if(dis_sonar_direita >= 20){
+    /*if(dis_sonar_direita >= 20){
       //bluetooth.println("Sobstaculo"); 
 
     }else{
       
-     
-      
-    
       //bluetooth.println("obstaculo"); 
       //delay(100);
        digitalWrite(LED, HIGH);
@@ -354,6 +478,8 @@ void modo_autonomo(){
       //delay(200);
     }
 
+
+    deteta();
    /* if(dis_sonar_esquerda <= 30){
         //bluetooth.println("Sobstaculo"); 
       
@@ -374,12 +500,12 @@ void modo_autonomo(){
       delay(200);
       
     }*/
-    
-    
+
+   
 }
 
 void seguranca(){
-    bluetooth.println("obstaculo");
+    bluetooth.println("1");
     digitalWrite(Mfrente, LOW);
     digitalWrite(Mtras, LOW);
     digitalWrite(LED, HIGH);
@@ -394,9 +520,11 @@ void seguranca(){
 void deteta(){
   if(digitalRead(pir)== HIGH){
           //inicio();
+          digitalWrite(Mfrente, LOW);
+          digitalWrite(Mtras, LOW);
           digitalWrite(LED, HIGH);
           Serial.println("detetado");
-          bluetooth.println("detetado");
+          bluetooth.println("2");
           //tone(som, 1450);
           //delay(100);
           //noTone(som);
@@ -413,7 +541,7 @@ void deteta(){
          }else{
           Serial.println("nao detetado");
           digitalWrite(LED, LOW);
-          bluetooth.println("Sobstaculo");
+          //bluetooth.println("Sobstaculo");
           
          }
 }
