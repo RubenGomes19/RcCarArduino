@@ -44,42 +44,26 @@ void setup()
   pinMode(pir, INPUT);
   Serial.begin(9600);
 
-  //while(!Serial);
-
   delay(100);
   myservo.attach(servo_pos);
   myservo.write(20);
-  
 
-  
-  
   delay(200);
   bluetooth.begin(9600);
 
   inicio();
-  
-  
-  
-  
+    
 }
+
 void loop()
 {
-
-     
-    //bluetooth.println("ligado");
-    //bluetooth.println(hc.dist());
-    //Serial.println("Teste");
-
-    //bool valor_pir = digitalRead(pir);
-
 
   if (bluetooth.available() > 0){
     
     while(bluetooth.available())  {      
       comando = bluetooth.read();  
-      //bluetooth.println("iniciou");
-      
-    }    
+       
+    }
     
     Serial.println(comando);
 
@@ -87,9 +71,11 @@ void loop()
 
     switch (comando) {
       case 'f':
-        if((hc.dist() <= 50) || (hc_direita.dist() <= 50) || (hc_esquerda.dist() <= 50)){
+        if(hc.dist() < 50){
           seguranca();
           
+        }else if((hc_direita.dist() <= 10) || (hc_esquerda.dist() <= 10)){
+          bluetooth.println("1");
         }else{
           bluetooth.println("0");
           //digitalWrite(Mtras, LOW);
@@ -115,11 +101,10 @@ void loop()
           digitalWrite(Mfrente, LOW);
           digitalWrite(Mtras, !digitalRead(Mtras));
           digitalWrite(LED, LOW);
-          //digitalWrite(LED, !digitalRead(LED));
           Serial.println("Tras");
         }
 
-        //deteta();
+        deteta();
         break;
 
 
@@ -147,12 +132,12 @@ void loop()
         if (estado % 2 == 0) {
           myservo.write(42);
           Serial.println("ESQUERDA");
-          bluetooth.println("esquerda");
+          //bluetooth.println("esquerda");
           
         } else {
           myservo.write(20);
           Serial.println("Indireita rodas");
-          bluetooth.println("normal");
+          //bluetooth.println("normal");
         }
 
         deteta();
@@ -180,31 +165,6 @@ void loop()
          modo_autonomo();
          delay(1000);
   
-         /*if(digitalRead(pir)== HIGH){
-          //inicio();
-          digitalWrite(LED, HIGH);
-          Serial.println("detetado");
-          //tone(som, 1450);
-          //delay(100);
-          //noTone(som);
-          for(int tom = 600; tom <1200; tom++){
-                delay(5);
-                tone(som,tom);
-            }
-            for(int tom = 1200; tom > 600; tom--){
-                delay(5);
-                tone(som,tom);
-            }
-            noTone(som);
-            
-         }else{
-          Serial.println("nao detetado");
-          digitalWrite(LED, LOW);
-          
-         }*/
-               
-         
-         delay(100);
          
          break;
        
@@ -219,13 +179,11 @@ void loop()
           break;
 
         
+        default:
+        Serial.println("Desconectou, movimentos parados");
+        para_mov();
+        break;
 
-
-      /*default:
-        inicio();
-        Serial.println("Algo falhou");
-        bluetooth.println("desligou");
-        break;*/
 
 
     }
@@ -251,18 +209,8 @@ void inicio() {
     delay(100);
     digitalWrite(LED, LOW);
     delay(100);
-
-    //sirene
-    /*tone(som, 1450);
-    delay(200);
-    tone(som, 1890);*/
-
-    
-  
-  
     
   }
-  
   
   Serial.println("Ligado");
 }
@@ -365,141 +313,10 @@ void modo_autonomo(){
       analogWrite(Mtras, velocidade);
     
       Serial.println("Todos sensores detetaram, a recuar ate poder efetuar manobra");
-
-      
+ 
      }
 
      deteta();
-
-  /*if( (dis_sonar_frente >= 50)){
-
-     
-     
-      myservo.write(20);
-      
-      
-      
-      //Serial.println("Sobstaculo");
-      //vel = 64;
-      //analogWrite(velocidadeMotor,vel);
-      digitalWrite(Mtras, LOW);
-      digitalWrite(LED, LOW);
-      
-      
-      analogWrite(Mfrente, velocidade);
-      //Serial.println("Sem obstaculo, a andar");
-
-      
-      //bluetooth.write("Sobstaculo"); 
-      //delay(400);
-      
-      
-      
-
-  }else{
-      //delay(100);
-      
-      delay(100);
-      //bluetooth.println(""); 
-
-     
-
-      myservo.write(0);
-      //Recuar durante 900 ms
-      //velocidade = 120;
-      //analogWrite(velocidadeMotor,vel);
-      digitalWrite(LED, HIGH);
-      digitalWrite(Mfrente, LOW);
-
-    
-      
-      
-
-      //Virar para a direita durante 700ms
-      //myservo.write(0);
-      //Serial.println("Esquerda");
-      
-     
-      analogWrite(Mtras, velocidade);
-      //Serial.println("Obstaculo detetado, a recuar");
-      //delay(200);
-
-      //envia_obstaculo();
-
-        //delay(100);
-        //bluetooth.print("obstaculo"); 
-        //delay(100);
-       
-
-    }
-
-    /*if(dis_sonar_direita >= 20){
-      //bluetooth.println("Sobstaculo"); 
-
-    }else{
-      
-      //bluetooth.println("obstaculo"); 
-      //delay(100);
-       digitalWrite(LED, HIGH);
-       //digitalWrite(Mfrente, LOW);
-      
-
-      //Virar para a direita durante 700ms
-      myservo.write(42);
-      Serial.println("Obstaculo a direita");
-      
-     
-      //analogWrite(Mtras, velocidade);
-      //digitalWrite(Mtras, HIGH);
-      //delay(200);
-    }
-
-    if(dis_sonar_esquerda >= 20){
-      //bluetooth.println("Sobstaculo"); 
-
-    }else{
-      
-     
-      
-    
-      //bluetooth.println("obstaculo"); 
-      //delay(100);
-       digitalWrite(LED, HIGH);
-       //digitalWrite(Mfrente, LOW);
-      
-
-      //Virar para a direita durante 700ms
-      myservo.write(0);
-      Serial.println("Obstaculo a direita");
-      
-     
-      //analogWrite(Mtras, velocidade);
-      //digitalWrite(Mtras, HIGH);
-      //delay(200);
-    }
-
-
-    deteta();
-   /* if(dis_sonar_esquerda <= 30){
-        //bluetooth.println("Sobstaculo"); 
-      
-   
-        //bluetooth.println("obstaculo"); 
-      delay(100);
-       digitalWrite(LED, HIGH);
-       //digitalWrite(Mfrente, LOW);
-      
-
-      //Virar para a direita durante 700ms
-      myservo.write(0);
-      Serial.println("Obstaculo a Esquerda");
-      
-     
-      //analogWrite(Mtras, velocidade);
-      //digitalWrite(Mtras, HIGH);
-      delay(200);
-      
-    }*/
 
    
 }
@@ -514,6 +331,18 @@ void seguranca(){
     
 
 
+}
+
+void para_mov(){
+    digitalWrite(Mfrente, LOW);
+    digitalWrite(Mtras, LOW);
+    myservo.write(20);
+    for(int i=0;i<10;i++){
+      digitalWrite(LED, HIGH);
+      delay(100);
+      digitalWrite(LED, LOW);
+      delay(100);
+    }
 }
 
 
